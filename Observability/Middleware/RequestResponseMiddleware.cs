@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Observability.Prometheus;
 using Observability.Splunk;
 using System.Diagnostics;
 using System.Text;
@@ -79,6 +80,9 @@ namespace Observability.Middleware
 
             var splunk = new SplunkClient();
             splunk.SendLogToSplunk(requestData.ToString());
+
+            var prometheus = new PrometheusClient();
+            prometheus.SendLogToPrometheus(requestData);
         }
     }
 }
