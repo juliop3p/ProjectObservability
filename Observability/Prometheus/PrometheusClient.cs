@@ -13,7 +13,9 @@ namespace Observability.Prometheus
         {
             var apiRequest = requests.Find(x => x.Origem.Equals("API Request"));
             var apiResponse = requests.Find(x => x.Origem.Equals("API Response"));
-            RequestsCounter.WithLabels(apiRequest.Path, apiRequest.Method, apiResponse.StatusCode.ToString(), "", "").Inc();
+            var apiExternalRequest = requests.Find(x => x.Origem.Equals("API External Request"));
+            var apiExternalResponse = requests.Find(x => x.Origem.Equals("API Externa Response"));
+            RequestsCounter.WithLabels(apiRequest.Path, apiRequest.Method, apiResponse.StatusCode.ToString(), apiExternalResponse?.Path ?? "", apiExternalResponse?.StatusCode?.ToString() ?? "").Inc();
         }
     }
 }

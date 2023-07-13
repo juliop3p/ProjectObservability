@@ -1,4 +1,7 @@
-﻿namespace Observability.Splunk
+﻿using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+
+namespace Observability.Splunk
 {
     public class SplunkClient
     {
@@ -9,15 +12,17 @@
             _httpClient = new HttpClient();
         }
 
-        public async Task SendLogToSplunk(string logMessage)
+        public async Task SendLogToSplunk(object logData)
         {
-            var requestUri = "http://localhost:8080";
-            var requestContent = new StringContent(logMessage);
-
             try
             {
-                var response = await _httpClient.PostAsync(requestUri, requestContent);
-                response.EnsureSuccessStatusCode();
+                // Salva logs localy for now
+                string LogFilePath = "logs.txt";
+
+                using (StreamWriter writer = File.AppendText(LogFilePath))
+                {
+                    writer.WriteLine(JsonConvert.SerializeObject(logData));
+                }
 
                 Console.WriteLine("Log enviado com sucesso para o Splunk!");
             }

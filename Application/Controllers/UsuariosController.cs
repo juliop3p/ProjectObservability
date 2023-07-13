@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Application.Services;
 using Domain;
 using Microsoft.AspNetCore.Mvc;
+using Observability.Splunk;
 
 namespace WebApi.Controllers
 {
@@ -14,6 +15,7 @@ namespace WebApi.Controllers
 
         public UsuariosController(IUsuarioService usuarioService)
         {
+            Logger.LogInfo("Criando UsuariosController");
             _usuarioService = usuarioService;
         }
 
@@ -21,6 +23,7 @@ namespace WebApi.Controllers
         public async Task<IActionResult> GetUsuarios()
         
         {
+            Logger.LogInfo("Iniciando UsuariosController");
             List<Usuario> usuarios = await _usuarioService.GetUsuarios();
 
             return Ok(usuarios);

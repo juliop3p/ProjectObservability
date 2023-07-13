@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Observability.Splunk;
 
 namespace Application.Controllers
 {
@@ -21,6 +22,7 @@ namespace Application.Controllers
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {
+            Logger.LogInfo("Sucesso GET WeatherForecast");
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),

@@ -1,6 +1,6 @@
 ﻿using Domain;
 using Microsoft.Extensions.Options;
-using Observability;
+using Observability.Splunk;
 using Refit;
 
 namespace Infrastructure.ExternalApis
@@ -22,6 +22,7 @@ namespace Infrastructure.ExternalApis
 
         public async Task<List<Usuario>> GetUsuarios()
         {
+            Logger.LogInfo("Chamando API de usuarios");
             return await _usuariosApi.GetUsuarios();
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Observability.Splunk;
 
 namespace Application.Services
 {
@@ -13,6 +14,7 @@ namespace Application.Services
 
         public async Task<List<Usuario>> GetUsuarios()
         {
+            Logger.LogInfo("Chamando _usuariosApi");
             return await _usuariosApi.GetUsuarios();
         }
     }

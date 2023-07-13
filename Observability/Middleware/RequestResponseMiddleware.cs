@@ -76,13 +76,17 @@ namespace Observability.Middleware
         {
             // Coloque o código que deseja executar ao final da solicitação aqui
             string requestId = RequestIdContext.Current;
+            
             var requestData = RequestDataStorage.GetRequestDataById(requestId);
 
             var splunk = new SplunkClient();
-            splunk.SendLogToSplunk(requestData.ToString());
+            splunk.SendLogToSplunk(requestData); ;
 
             var prometheus = new PrometheusClient();
             prometheus.SendLogToPrometheus(requestData);
+
+
+            Logger.SaveLog();
         }
     }
 }
