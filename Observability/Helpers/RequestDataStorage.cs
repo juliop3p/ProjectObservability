@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Collections.Concurrent;
-using System.Net;
 
 public static class RequestDataStorage
 {
@@ -10,42 +9,48 @@ public static class RequestDataStorage
     {
         var requestData = new RequestEntry
         {
-            Origem = "API Request",
+            RequestType = "API Request",
             Path = incomingRequest.Path,
             Method = incomingRequest.Method,
+            Headers = incomingRequest.Headers.ToString(),
+            Body = incomingRequest.Body.ToString(),
+            Query = incomingRequest.Query.ToString(),
         };
 
         var requestEntries = new List<RequestEntry> { requestData };
         _requestData.TryAdd(requestId, requestEntries);
     }
 
-    public static void StoreApiRequestData(string requestId, HttpRequestMessage apiRequest)
+    public static void StoreApiExternalRequestData(string requestId, HttpRequestMessage apiRequest)
     {
         if (_requestData.TryGetValue(requestId, out var requestEntries))
         {
             var requestData = new RequestEntry
             {
-                Origem = "API Externa Request",
+                RequestType = "API Externa Request",
                 Path = apiRequest.RequestUri.ToString(),
                 Method = apiRequest.Method.ToString(),
+                Headers = apiRequest.Headers.ToString(),
+                Body = apiRequest?.Content?.ToString(),
             };
 
             requestEntries.Add(requestData);
         }
     }
 
-    public static void StoreApiResponseData(string requestId, HttpResponseMessage apiResponse, long responseTime)
+    public static void StoreApiExternalResponseData(string requestId, HttpResponseMessage apiResponse, long responseTime)
     {
         if (_requestData.TryGetValue(requestId, out var requestEntries))
         {
             var responseData = new RequestEntry
             {
-                Origem = "API Externa Response",
+                RequestType = "API Externa Response",
                 Path = apiResponse.RequestMessage.RequestUri.ToString(),
                 StatusCode = (int)apiResponse.StatusCode,
                 IsSuccess = apiResponse.IsSuccessStatusCode,
-                ResponseTime = responseTime
-                // Adicione outras propriedades relevantes da resposta da API externa
+                TimeTaken = responseTime,
+                Body = apiResponse.Content.ToString(),
+                Headers= apiResponse.Headers.ToString(),
             };
 
             requestEntries.Add(responseData);
@@ -58,11 +63,13 @@ public static class RequestDataStorage
         {
             var responseData = new RequestEntry
             {
-                Origem = "API Response",
+                RequestType = "API Response",
                 Path = response.HttpContext.Request.Path,
                 StatusCode = (int?)response.StatusCode,
-                ResponseTime = responseTime
-                // Adicione outras propriedades relevantes da resposta da API
+                TimeTaken = responseTime,
+                Body = response.Body.ToString(),
+                ContentType = response.ContentType,
+                Headers = response.Headers.ToString(),
             };
 
             requestEntries.Add(responseData);
@@ -73,31 +80,14 @@ public static class RequestDataStorage
     {
         if (_requestData.TryGetValue(requestId, out var requestEntries))
         {
-            return requestEntries.OrderBy(entry => entry.Origem).ToList();
+            return requestEntries.OrderBy(entry => entry.RequestType).ToList();
         }
 
         return null;
-    }
-
-
-    public static List<List<RequestEntry>> GetAllRequestData()
-    {
-        return _requestData.Values.Select(requestEntries => requestEntries.OrderBy(entry => entry.Origem).ToList()).ToList();
     }
 
     public static void RemoveRequestData(string requestId)
     {
         _requestData.TryRemove(requestId, out _);
     }
-}
-
-public class RequestEntry
-{
-    public string Origem { get; set; }
-    public string Path { get; set; }
-    public int? StatusCode { get; set; }
-    public string Method { get; set; }
-    public bool IsSuccess { get; set; } = true;
-    public long? ResponseTime { get; set; }
-    // Adicione outras propriedades conforme necessário
 }

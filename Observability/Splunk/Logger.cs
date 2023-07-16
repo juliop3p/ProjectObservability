@@ -5,19 +5,18 @@ namespace Observability.Splunk
 {
     public static class Logger
     {
-        private static readonly ConcurrentDictionary<string, List<LogData>> requestLogs = new ConcurrentDictionary<string, List<LogData>>();
+        private static readonly ConcurrentDictionary<string, List<LogData>> _requestLogs = new ConcurrentDictionary<string, List<LogData>>();
 
         public static void LogInfo(object data)
         {
             string requestId = RequestIdContext.Current;
 
             var log = new LogData(
-                requestId,
                 criticity: "Informação",
                 data: data
             );
 
-            requestLogs.AddOrUpdate(
+            _requestLogs.AddOrUpdate(
                 requestId,
                 new List<LogData> { log },
                 (_, logs) => { logs.Add(log); return logs; }
@@ -29,12 +28,11 @@ namespace Observability.Splunk
             string requestId = RequestIdContext.Current;
 
             var log = new LogData(
-                requestId,
                 criticity: "Aviso",
                 data: data
             );
 
-            requestLogs.AddOrUpdate(
+            _requestLogs.AddOrUpdate(
                 requestId,
                 new List<LogData> { log },
                 (_, logs) => { logs.Add(log); return logs; }
@@ -46,49 +44,33 @@ namespace Observability.Splunk
             string requestId = RequestIdContext.Current;
 
             var log = new LogData(
-                requestId,
                 criticity: "Erro",
                 data: data
             );
 
-            requestLogs.AddOrUpdate(
+            _requestLogs.AddOrUpdate(
                 requestId,
                 new List<LogData> { log },
                 (_, logs) => { logs.Add(log); return logs; }
             );
         }
 
-        public static void SaveLog()
+        public static List<LogData> GetLogsById(string requestId)
         {
-            var splunkClient = new SplunkClient();
-            string requestId = RequestIdContext.Current;
-
-            if (requestLogs.TryRemove(requestId, out var logs))
+            if (_requestLogs.TryRemove(requestId, out var logs))
             {
-
-                var log = new LogModel(
-                    requestId,
-                    application: AppDomain.CurrentDomain.FriendlyName,
-                    criticity: GetLogCriticity(logs),
-                    data: logs
-                );
-
-                splunkClient.SendLogToSplunk(log);
+                return logs ;
             }
+
+            return new List<LogData>();
         }
 
-        private static LogData CreateLogData(string requestId, string criticity, object data)
+        public static void RemoveLogsById(string requestId)
         {
-            // Aqui você pode personalizar a criação do objeto LogData conforme suas necessidades
-            return new LogData(requestId, criticity, data);
+            _requestLogs.TryRemove(requestId, out var _);
         }
 
-        private static string GetLogKey(string requestId)
-        {
-            return $"{AppDomain.CurrentDomain.FriendlyName}_{requestId}";
-        }
-
-        private static string GetLogCriticity(List<LogData> logsData)
+        public static string GetLogCriticity(List<LogData> logsData)
         {
             if (logsData.Any(log => log.Criticity == "Erro"))
             {

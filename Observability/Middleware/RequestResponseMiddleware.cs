@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Observability.Prometheus;
 using Observability.Splunk;
+using Observability.Splunk.Models;
 using System.Diagnostics;
 using System.Text;
 
@@ -72,21 +73,74 @@ namespace Observability.Middleware
             return body;
         }
 
+        //private async Task ProcessRequestAsync(HttpContext context)
+        //{
+        //    // Coloque o código que deseja executar ao final da solicitação aqui
+        //    string requestId = RequestIdContext.Current;
+
+        //    // SEND LOGS TO SPLUNK
+        //    var splunk = new SplunkClient();
+        //    var logsCustom = Logger.GetLogsById(requestId);
+
+        //    var logResult = new LogModel(
+        //            requestId,
+        //            application: AppDomain.CurrentDomain.FriendlyName,
+        //            criticity: Logger.GetLogCriticity(logsCustom),
+        //            data: logsCustom
+        //        );
+
+        //    var requestData = RequestDataStorage.GetRequestDataById(requestId);
+
+        //    logResult.Request = requestData;
+
+        //    splunk.SendLogToSplunk(logResult);
+
+        //    // limpa os logs
+        //    RequestDataStorage.RemoveRequestData(requestId);
+        //    Logger.RemoveLogsById(requestId);
+
+
+        //    // SEND LOGS TO PROMETHEUS
+        //    var prometheus = new PrometheusClient();
+        //    prometheus.SendLogToPrometheus(requestData);
+        //}
+
         private async Task ProcessRequestAsync(HttpContext context)
         {
-            // Coloque o código que deseja executar ao final da solicitação aqui
             string requestId = RequestIdContext.Current;
-            
+
+            var logsCustom = Logger.GetLogsById(requestId);
             var requestData = RequestDataStorage.GetRequestDataById(requestId);
 
-            var splunk = new SplunkClient();
-            splunk.SendLogToSplunk(requestData); ;
+            SendLogsToSplunk(requestId, logsCustom, requestData);
+            ClearRequestDataAndLogs(requestId);
+            SendLogsToPrometheus(requestData);
+        }
 
+        private void SendLogsToSplunk(string requestId, List<LogData> logsCustom, List<RequestEntry> requestData)
+        {
+            var splunk = new SplunkClient();
+            var logResult = new LogModel(
+                requestId,
+                application: AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
+                criticity: Logger.GetLogCriticity(logsCustom),
+                data: logsCustom
+            );
+            logResult.Request = requestData;
+            splunk.SendLogToSplunk(logResult);
+        }
+
+        private void ClearRequestDataAndLogs(string requestId)
+        {
+            RequestDataStorage.RemoveRequestData(requestId);
+            Logger.RemoveLogsById(requestId);
+        }
+
+        private void SendLogsToPrometheus(List<RequestEntry> requestData)
+        {
             var prometheus = new PrometheusClient();
             prometheus.SendLogToPrometheus(requestData);
-
-
-            Logger.SaveLog();
         }
+
     }
 }

@@ -12,11 +12,17 @@
             Data = data;
         }
 
+        public LogModel()
+        {
+
+        }
+
         public string RequestId { get; set; }
         public string Application { get; set; }
         public string Date { get; set; }
         public string Criticity { get; set; }
         public string Server { get; set; }
         public List<LogData> Data { get; set; }
+        public List<RequestEntry> Request { get; set; }
     }
 }

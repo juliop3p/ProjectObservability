@@ -11,10 +11,10 @@ namespace Observability.Prometheus
 
         public void SendLogToPrometheus(List<RequestEntry> requests)
         {
-            var apiRequest = requests.Find(x => x.Origem.Equals("API Request"));
-            var apiResponse = requests.Find(x => x.Origem.Equals("API Response"));
-            var apiExternalRequest = requests.Find(x => x.Origem.Equals("API External Request"));
-            var apiExternalResponse = requests.Find(x => x.Origem.Equals("API Externa Response"));
+            var apiRequest = requests.Find(x => x.RequestType.Equals("API Request"));
+            var apiResponse = requests.Find(x => x.RequestType.Equals("API Response"));
+            var apiExternalRequest = requests.Find(x => x.RequestType.Equals("API External Request"));
+            var apiExternalResponse = requests.Find(x => x.RequestType.Equals("API Externa Response"));
             RequestsCounter.WithLabels(apiRequest.Path, apiRequest.Method, apiResponse.StatusCode.ToString(), apiExternalResponse?.Path ?? "", apiExternalResponse?.StatusCode?.ToString() ?? "").Inc();
         }
     }

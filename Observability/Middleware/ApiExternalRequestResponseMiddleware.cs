@@ -4,39 +4,42 @@ public class ApiExternalRequestResponseMiddleware : HttpClientHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
+        var stopwatch = Stopwatch.StartNew();
 
-        // Capturar o RequestID antes de enviar para o próximo handler
         string requestId = RequestIdContext.Current;
 
-        // Capturar a requisição antes de enviar para o próximo handler
+        await CaptureRequest(requestId, request);
+
+        HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
+
+        long elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+
+        await CaptureResponse(requestId, response, elapsedMilliseconds);
+
+        return response;
+    }
+
+    private async Task CaptureRequest(string requestId, HttpRequestMessage request)
+    {
         string requestUri = request.RequestUri.ToString();
-        
+
         string requestBody = null;
-        RequestDataStorage.StoreApiRequestData(requestId, request);
-
-
-        if (request != null && request.Content != null)
+        if (request.Content != null)
         {
             requestBody = await request.Content.ReadAsStringAsync();
         }
 
-        // Enviar a requisição para o próximo handler e obter a resposta
-        HttpResponseMessage response = await base.SendAsync(request, cancellationToken);
+        RequestDataStorage.StoreApiExternalRequestData(requestId, request);
+    }
 
-        // Capturar a resposta após o processamento
-        stopwatch.Stop();
-        var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
-        RequestDataStorage.StoreApiResponseData(requestId, response, elapsedMilliseconds);
-
+    private async Task CaptureResponse(string requestId, HttpResponseMessage response, long elapsedMilliseconds)
+    {
         string responseBody = null;
-
-        if (response != null && response.Content != null)
+        if (response.Content != null)
         {
             responseBody = await response.Content.ReadAsStringAsync();
         }
 
-        return response;
+        RequestDataStorage.StoreApiExternalResponseData(requestId, response, elapsedMilliseconds);
     }
 }
